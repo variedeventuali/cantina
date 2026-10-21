@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7b1e3a">
+<meta name="color-scheme" content="light dark">
+<title>Cantina</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root {
+  --bg: #f7f4f1; --card: #ffffff; --ink: #231a1d; --muted: #7a6d71; --line: #e8e0dc;
+  --accent: #7b1e3a; --accent-ink: #ffffff; --accent-soft: #f3e3e8; --ok: #2f7d4f; --danger: #b3261e;
+  --shadow: 0 1px 2px rgba(35,26,29,.06), 0 4px 14px rgba(35,26,29,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161113; --card: #221a1d; --ink: #f1e9eb; --muted: #a39598; --line: #342a2e;
+    --accent: #d4627f; --accent-ink: #1b0d12; --accent-soft: #3a1f29; --ok: #6cc08a; --danger: #ff8a80;
+    --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161113; --card: #221a1d; --ink: #f1e9eb; --muted: #a39598; --line: #342a2e;
+  --accent: #d4627f; --accent-ink: #1b0d12; --accent-soft: #3a1f29; --ok: #6cc08a; --danger: #ff8a80;
+  --shadow: none;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-text-size-adjust: 100%; }
+button, input, select { font: inherit; color: inherit; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+
+header { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-top: env(safe-area-inset-top); border-bottom: 1px solid var(--line); }
+.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 0 4px; }
+h1 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
+.sum { color: var(--muted); font-size: 13px; text-align: right; }
+.sum b { color: var(--ink); font-weight: 600; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 10px; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: none; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: 14px; }
+.tab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.tab small { opacity: .7; margin-left: 4px; }
+
+.tools { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 12px 0 4px; }
+.tools .row2 { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+input[type=search], .field input, select {
+  width: 100%; border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 10px 12px; outline: none; min-height: 42px;
+}
+input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+select { width: auto; }
+.chip { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.2); }
+.colors { grid-column: 1 / -1; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.colors::-webkit-scrollbar { display: none; }
+.colors .chip { flex: none; }
+.count { color: var(--muted); font-size: 13px; margin-left: auto; }
+
+main { padding-bottom: 110px; }
+.list { display: grid; gap: 8px; padding-top: 8px; }
+.item { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: center; width: 100%; text-align: left;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; cursor: pointer; box-shadow: var(--shadow); }
+.item:active { transform: scale(.995); }
+.qty { width: 52px; padding: 6px 0; border-radius: 12px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; line-height: 1.1; }
+.qty b { font-size: 22px; font-weight: 700; }
+.qty small { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; opacity: .85; }
+.qty.zero { background: var(--line); color: var(--muted); }
+.name { font-weight: 600; overflow-wrap: anywhere; }
+.meta { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.right { text-align: right; font-variant-numeric: tabular-nums; }
+.right .v { font-weight: 600; }
+.badge { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-top: 2px; }
+.badge.plain { background: var(--line); color: var(--muted); }
+.year-h { margin: 18px 0 2px; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.empty { text-align: center; color: var(--muted); padding: 48px 0; }
+
+.fab { position: fixed; right: max(16px, calc(50% - 364px)); bottom: calc(18px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 50%; border: 0;
+  background: var(--accent); color: var(--accent-ink); font-size: 30px; line-height: 1; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.25); z-index: 6; }
+
+/* statistiche */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 10px; box-shadow: var(--shadow); }
+.card h2 { margin: 0 0 10px; font-size: 14px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow); }
+.kpi .n { font-size: 24px; font-weight: 700; letter-spacing: -.01em; }
+.kpi .l { color: var(--muted); font-size: 13px; }
+.bar { display: grid; grid-template-columns: minmax(80px, 38%) 1fr auto; gap: 10px; align-items: center; padding: 4px 0; font-size: 14px; }
+.bar .lab { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar .track { height: 10px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar .fill { height: 100%; background: var(--accent); border-radius: 999px; }
+.bar .num { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; min-width: 36px; text-align: right; }
+
+/* modale */
+.scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--bg); width: 100%; max-width: 560px; max-height: 92vh; overflow: auto; border-radius: 20px 20px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+@media (min-width: 640px) { .scrim { align-items: center; } .sheet { border-radius: 20px; } }
+.sheet h3 { margin: 0; font-size: 19px; overflow-wrap: anywhere; }
+.sheet .sub { color: var(--muted); margin-bottom: 14px; }
+.facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+.fact { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; }
+.fact .l { color: var(--muted); font-size: 12px; }
+.fact .v { font-weight: 600; }
+.stepper { display: flex; align-items: center; justify-content: space-between; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; margin-bottom: 14px; }
+.stepper .ctl { display: flex; align-items: center; gap: 14px; }
+.stepper button { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); cursor: pointer; font-size: 20px; line-height: 1; }
+.stepper b { min-width: 20px; text-align: center; font-size: 17px; }
+.actions { display: grid; gap: 8px; }
+.actions.two { grid-template-columns: 1fr 1fr; }
+.btn { border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 12px; cursor: pointer; font-weight: 600; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.danger { color: var(--danger); }
+.btn.dangerfill { background: var(--danger); color: #fff; border-color: var(--danger); }
+.btn:disabled { opacity: .5; cursor: default; }
+.field { display: grid; gap: 4px; margin-bottom: 10px; }
+.field label { font-size: 12px; color: var(--muted); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+.check { display: flex; gap: 10px; align-items: center; margin: 12px 0; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.dups { margin: 4px 0 12px; display: grid; gap: 8px; }
+.dups h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.dup { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+.dup.same { border-color: var(--accent); background: var(--accent-soft); }
+.dup .btns { display: flex; gap: 6px; }
+.dup .btns button { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.dup .btns button.plus { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.hint { font-size: 13px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+.hint.ok { color: var(--ok); }
+.note { color: var(--muted); font-size: 13px; margin: 8px 0 14px; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(86px + env(safe-area-inset-bottom)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; z-index: 30; max-width: 90vw; font-size: 14px; }
+.toast.err { background: var(--danger); color: #fff; }
+.busy { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.12); display: grid; place-items: center; }
+.spin { width: 34px; height: 34px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--accent); animation: sp .8s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+[hidden] { display: none !important; }
+.hr { display: flex; align-items: center; gap: 6px; }
+.hbtn { position: relative; border: 0; background: none; padding: 6px; border-radius: 50%; cursor: pointer; color: var(--ink); display: inline-flex; }
+.hbtn:active { background: var(--accent-soft); }
+.hbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.hbtn i { position: absolute; top: 0; right: -2px; min-width: 17px; height: 17px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font: 600 11px/17px system-ui; text-align: center; font-style: normal; padding: 0 4px; }
+.foot { text-align: center; font-size: 12px; color: var(--muted); margin: 26px 0 4px; }
+.foot.warn { color: var(--danger); }
+.sheet .note { margin: 12px 0 0; }
+.empty .btn { margin-top: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <h1>Cantina</h1>
+      <div class="hr"><div class="sum" id="sum"></div>
+        <button class="hbtn" data-gx="sync" aria-label="Sincronizza"><svg viewBox="0 0 24 24"><path d="M20 7a8 8 0 00-14-2M4 4v4h4M4 17a8 8 0 0014 2M20 20v-4h-4"/></svg><i id="badge" hidden></i></button>
+        <button class="hbtn" data-gx="settings" aria-label="Impostazioni"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1.3l2-1.5-2-3.4-2.3.9a7 7 0 00-2.2-1.3L14 3h-4l-.4 2.4a7 7 0 00-2.2 1.3l-2.3-.9-2 3.4 2 1.5A7 7 0 005 12c0 .4 0 .9.1 1.3l-2 1.5 2 3.4 2.3-.9a7 7 0 002.2 1.3L10 21h4l.4-2.4a7 7 0 002.2-1.3l2.3.9 2-3.4-2-1.5c.1-.4.1-.9.1-1.3z"/></svg></button></div>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+  </div>
+</header>
+<main class="wrap">
+  <div class="tools" id="tools"></div>
+  <div id="view"></div>
+  <div class="foot" id="foot"></div>
+</main>
+<button class="fab" id="fab" aria-label="Aggiungi" title="Aggiungi">+</button>
+<div id="modal"></div>
+<div id="gset"></div>
+<div id="toast" class="toast" hidden></div>
+<div id="busy" class="busy" hidden><div class="spin"></div></div>
+
+<script src="exceljs.min.js"></script>
+<script>
+const TABS = [['rossi', 'Rossi'], ['nonrossi', 'Non rossi'], ['dolci', 'Dolci'], ['magnum', 'Magnum'], ['bevuti', 'Bevuti'], ['stats', 'Statistiche']];
+const WINE_FIELDS = [
+  { k: 'Nome', l: 'Nome', req: 1, full: 1 },
+  { k: 'Cantina', l: 'Cantina', full: 1 },
+  { k: 'Anno', l: 'Anno', ph: '2020, SA o -' },
+  { k: 'Acquisto', l: 'Acquisto', ph: 'AAAA-MM' },
+  { k: 'Prezzo', l: 'Prezzo €', num: 1 },
+  { k: 'Valore', l: 'Valore €', num: 1 },
+  { k: 'Quantità', l: 'Bottiglie totali', num: 1 },
+  { k: 'Cantinetta', l: 'Di cui in cantinetta', num: 1 },
+];
+const FIELDS = {
+  rossi: WINE_FIELDS,
+  nonrossi: [...WINE_FIELDS, { k: 'Colore', l: 'Colore', ph: 'Bianco, Rosato, Orange…', list: 'colori', full: 1 }],
+  magnum: null,
+  dolci: [{ k: 'Nome', l: 'Nome', req: 1, full: 1 }, { k: 'Prezzo', l: 'Prezzo €', num: 1 }, { k: 'Valore', l: 'Valore €', num: 1 }, { k: 'Quantità', l: 'Bottiglie totali', num: 1 }],
+};
+FIELDS.magnum = FIELDS.dolci;
+const simple = k => k === 'dolci' || k === 'magnum';
+const SORTS = {
+  valore:   ['Valore (alto)',    (a, b) => num(b.Valore) - num(a.Valore)],
+  nome:     ['Nome',             (a, b) => cmpStr(a.Nome, b.Nome)],
+  cantina:  ['Cantina',          (a, b) => cmpStr(a.Cantina, b.Cantina) || cmpStr(a.Nome, b.Nome)],
+  anno:     ['Annata',           (a, b) => (yr(a.Anno) || 9999) - (yr(b.Anno) || 9999)],
+  acquisto: ['Acquisto recente', (a, b) => cmpStr(b.Acquisto && /^\d/.test(b.Acquisto) ? b.Acquisto : '', a.Acquisto && /^\d/.test(a.Acquisto) ? a.Acquisto : '')],
+  qty:      ['Quantità',         (a, b) => num(b['Quantità']) - num(a['Quantità'])],
+};
+const MESI = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
+
+const S = { tab: 'rossi', q: '', sort: 'valore', fridge: false, color: '', data: null, modal: null };
+const COLOR_HEX = { bianco: '#e6d27a', rosato: '#ec8fa6', orange: '#e58a3a', arancione: '#e58a3a', bollicina: '#9cc7dd', bollicine: '#9cc7dd', rosso: '#8c1f3a', dolce: '#c9a24a' };
+const colorHex = c => COLOR_HEX[fold(c).trim()] || '#a39598';
+/** Colori presenti nei Non rossi, dal più frequente: [[nome, quanti], ...] */
+function colors() {
+  const m = {};
+  rows('nonrossi').forEach(r => { const c = String(r.Colore || '').trim(); if (c) m[c] = (m[c] || 0) + 1; });
+  return Object.entries(m).sort((a, b) => b[1] - a[1] || cmpStr(a[0], b[0]));
+}
+const $ = id => document.getElementById(id);
+
+// ---------- utilità ----------
+const num = v => (typeof v === 'number' ? v : Number(v) || 0);
+const yr = v => (typeof v === 'number' ? v : (/^\d{4}$/.test(String(v)) ? Number(v) : 0));
+const cmpStr = (a, b) => String(a || '').trim().localeCompare(String(b || '').trim(), 'it', { sensitivity: 'base' });
+const fold = s => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const eur = v => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num(v));
+const eurShort = v => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
+const fmtAcq = v => {
+  const m = /^(\d{4})-(\d{2})$/.exec(String(v || ''));
+  return m ? MESI[+m[2] - 1] + ' ' + m[1] : (v && v !== '-' ? String(v) : '—');
+};
+const isWine = k => k === 'rossi' || k === 'nonrossi';
+const rows = k => (S.data && S.data[k]) || [];
+const sumBy = (arr, f) => arr.reduce((t, r) => t + f(r), 0);
+
+function toast(msg, err) {
+  const t = $('toast');
+  t.textContent = msg; t.className = 'toast' + (err ? ' err' : ''); t.hidden = false;
+  clearTimeout(toast.h); toast.h = setTimeout(() => (t.hidden = true), err ? 5000 : 2200);
+}
+
+// ---------- motore locale: Vino.xlsx in memoria + registro delle modifiche ----------
+const isDate = v => Object.prototype.toString.call(v) === '[object Date]';
+const APP_VERSION = '1.0 · 21 ott 2026';
+const K_BASE = 'cantina-base', K_META = 'cantina-meta', K_OPS = 'cantina-ops', SYNC_KEY = 'cantina-sync';
+const XWINE = ['Nome', 'Cantina', 'Anno', 'Acquisto', 'Prezzo', 'Valore', 'Quantità', 'Cantinetta'];
+const XDOL = ['Nome', 'Prezzo', 'Valore', 'Quantità'];
+const XSHEETS = {
+  rossi: ['Rossi', XWINE], nonrossi: ['Non rossi', XWINE.concat(['Colore'])],
+  dolci: ['Dolci', XDOL], magnum: ['Dolci', XDOL],
+  bevuti: ['Bevuti', ['Nome', 'Cantina', 'Anno', 'Acquisto', 'Prezzo', 'Valore', 'Quando']],
+};
+const XBLOCK = { dolci: 0, magnum: 1 };
+const XNUM = ['Prezzo', 'Valore', 'Quantità', 'Cantinetta', 'Quando'];
+const XMAXCOL = 30;
+let WB = null, OPS = [], META = { sha: null, at: 0, force: false }, BASE = null;
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } };
+const lsJSON = k => { try { return JSON.parse(lsGet(k) || 'null'); } catch (e) { return null; } };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const bytesToB64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 8192) s += String.fromCharCode.apply(null, u8.subarray(i, i + 8192)); return btoa(s); };
+const b64ToBytes = b64 => { const s = atob(String(b64).replace(/\s/g, '')), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; };
+
+function cv(c) {
+  let v = c.value;
+  if (v && typeof v === 'object' && !isDate(v)) {
+    if ('result' in v) v = v.result; else if (v.richText) v = v.richText.map(t => t.text).join(''); else if (v.text) v = v.text; else v = null;
+  }
+  return v == null ? null : v;
+}
+const ctext = (ws, r, c) => String(cv(ws.getCell(r, c)) == null ? '' : cv(ws.getCell(r, c))).trim();
+function xHeader(ws) {
+  for (let r = 1; r <= 5; r++) if (ctext(ws, r, 1) === 'Nome') { const head = []; for (let c = 1; c <= XMAXCOL; c++) head.push(ctext(ws, r, c)); return [r, head]; }
+  throw new Error('Intestazione "Nome" non trovata nel foglio ' + ws.name);
+}
+function xBlocks(ws) {
+  const res = [];
+  for (let r = 1; r <= ws.rowCount; r++) {
+    const n = ctext(ws, r, 1);
+    if (n === 'Nome') res.push([r, []]); else if (n && res.length) res[res.length - 1][1].push(r);
+  }
+  return res;
+}
+function xKeyRows(ws, key) {
+  const bl = xBlocks(ws);
+  if (key in XBLOCK) { const i = XBLOCK[key]; return i < bl.length ? bl[i][1] : []; }
+  return bl.reduce((a, b) => a.concat(b[1]), []);
+}
+const xSer = v => (isDate(v) ? v.getUTCFullYear() + '-' + String(v.getUTCMonth() + 1).padStart(2, '0') : v);
+function xReadAll(wb) {
+  const out = {};
+  for (const key in XSHEETS) {
+    const [name, cols] = XSHEETS[key], ws = wb.getWorksheet(name);
+    if (!ws) { out[key] = []; continue; }
+    const head = xHeader(ws)[1];
+    out[key] = xKeyRows(ws, key).map(r => {
+      const o = { row: r };
+      cols.forEach(c => { const i = head.indexOf(c); o[c] = i >= 0 ? xSer(cv(ws.getCell(r, i + 1))) : null; });
+      return o;
+    });
+  }
+  return out;
+}
+function xFromClient(col, v) {
+  const s = v == null ? '' : String(v).trim();
+  if (XNUM.includes(col)) { const n = Number(s.replace(',', '.')); return s === '' || isNaN(n) ? null : n; }
+  if (col === 'Anno') { if (s === '') return '-'; return /^-?\d+$/.test(s) ? parseInt(s, 10) : s; }
+  if (col === 'Acquisto') { const m = /^(\d{4})-(\d{2})$/.exec(s); return m ? new Date(Date.UTC(+m[1], +m[2] - 1, 1)) : (s || '-'); }
+  return s;
+}
+function xAppendRow(ws, key, vals) {
+  const head = xHeader(ws)[1], bl = xBlocks(ws);
+  let hr, last, insert = false;
+  if (key in XBLOCK) {
+    const i = XBLOCK[key];
+    if (i < bl.length) { hr = bl[i][0]; const rs = bl[i][1]; last = rs.length ? rs[rs.length - 1] : hr; insert = i < bl.length - 1; }
+    else {
+      const [hr0, rs0] = bl[bl.length - 1]; last = (rs0.length ? rs0[rs0.length - 1] : hr0) + 3;
+      for (let c = 1; c <= head.length; c++) { const s = ws.getCell(hr0, c), d = ws.getCell(last, c); d.style = Object.assign({}, s.style); d.value = s.value; }
+      hr = last;
+    }
+  } else { hr = bl[0][0]; const rs = bl[0][1]; last = rs.length ? rs[rs.length - 1] : hr; }
+  const nr = last + 1;
+  if (insert) ws.spliceRows(nr, 0, []);
+  const lastRow = ws.getRow(last);
+  if (last > hr && lastRow.height) ws.getRow(nr).height = lastRow.height;
+  for (let c = 1; c <= head.length; c++) {
+    if (!head[c - 1]) continue;
+    const s = ws.getCell(last, c), d = ws.getCell(nr, c);
+    if (last > hr) d.style = Object.assign({}, s.style);
+    if (head[c - 1] in vals) d.value = vals[head[c - 1]];
+  }
+}
+const xfold = s => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+function xIdent(ws, head, r) {
+  const g = n => { const i = head.indexOf(n); if (i < 0) return ''; const v = xSer(cv(ws.getCell(r, i + 1))); return xfold(v); };
+  return [g('Nome'), g('Cantina'), g('Anno'), g('Acquisto')].join('|');
+}
+function xFindRow(ws, key, w) {
+  const head = xHeader(ws)[1], rs = xKeyRows(ws, key);
+  for (const r of rs) if (xIdent(ws, head, r) === w) return r;
+  throw new Error('Bottiglia non trovata nel file: ' + w.split('|')[0]);
+}
+function xApply(wb, op) {
+  const [name, cols] = XSHEETS[op.k], ws = wb.getWorksheet(name);
+  if (!ws) throw new Error('Foglio mancante: ' + name);
+  if (op.t === 'add') { const v = {}; cols.forEach(c => (v[c] = xFromClient(c, op.item[c]))); xAppendRow(ws, op.k, v); return; }
+  const head = xHeader(ws)[1], row = xFindRow(ws, op.k, op.w), col = c => head.indexOf(c) + 1;
+  if (op.t === 'upd') { cols.forEach(c => { if (c in op.item && col(c)) ws.getCell(row, col(c)).value = xFromClient(c, op.item[c]); }); return; }
+  if (op.t === 'del') { ws.spliceRows(row, 1); return; }
+  if (op.t === 'drink') {
+    const val = c => (col(c) ? cv(ws.getCell(row, col(c))) : null), qty = Number(val('Quantità')) || 0;
+    if (qty < 1) throw new Error('Nessuna bottiglia disponibile.');
+    const bev = wb.getWorksheet('Bevuti'), log = {};
+    XSHEETS.bevuti[1].forEach(c => { if (c !== 'Quando' && cols.includes(c)) { const i = col(c); log[c] = i ? ws.getCell(row, i).value : null; } });
+    log.Quando = op.y;
+    const bhead = xHeader(bev)[1], bl = xBlocks(bev)[0], last = bl[1].length ? bl[1][bl[1].length - 1] : bl[0], nr = last + 1;
+    for (let c = 1; c <= bhead.length; c++) {
+      if (!bhead[c - 1]) continue;
+      const s = bev.getCell(last, c), d = bev.getCell(nr, c);
+      if (last > bl[0]) d.style = Object.assign({}, s.style);
+      if (bhead[c - 1] in log) d.value = log[bhead[c - 1]];
+    }
+    if (qty === 1) ws.spliceRows(row, 1);
+    else {
+      ws.getCell(row, col('Quantità')).value = qty - 1;
+      if (col('Cantinetta')) { let c = Number(val('Cantinetta')) || 0; if (op.ff && c > 0) c--; ws.getCell(row, col('Cantinetta')).value = Math.min(c, qty - 1); }
+    }
+  }
+}
+// registro delle operazioni già applicate (foglio nascosto) per non ripeterle se un invio va a metà
+function appliedIds(wb) { const s = new Set(), ws = wb.getWorksheet('_sync'); if (ws) ws.eachRow(r => { const v = r.getCell(1).value; if (v) s.add(String(v)); }); return s; }
+function markApplied(wb, ids) {
+  if (!ids.length) return;
+  let ws = wb.getWorksheet('_sync'); if (!ws) ws = wb.addWorksheet('_sync', { state: 'veryHidden' });
+  ids.forEach(id => ws.addRow([id]));
+  if (ws.rowCount > 300) ws.spliceRows(1, ws.rowCount - 300);
+}
+async function xBytes(wb) { wb.calcProperties = Object.assign(wb.calcProperties || {}, { fullCalcOnLoad: true }); return new Uint8Array(await wb.xlsx.writeBuffer()); }
+async function xLoad(bytes) { const wb = new ExcelJS.Workbook(); await wb.xlsx.load(bytes); return wb; }
+
+function persistOps() { if (!lsSet(K_OPS, JSON.stringify(OPS))) toast('Memoria piena: sincronizza o scarica il file', true); }
+function persistMeta() { lsSet(K_META, JSON.stringify(META)); }
+async function rebuild() {
+  if (!BASE) { WB = null; return; }
+  WB = await xLoad(b64ToBytes(BASE));
+  const keep = [];
+  OPS.forEach(op => { try { xApply(WB, op); keep.push(op); } catch (e) { /* operazione non più applicabile: scartata */ } });
+  if (keep.length !== OPS.length) { OPS = keep; persistOps(); }
+}
+function localApi(fn, a) {
+  if (!WB) throw new Error('Nessun file Excel caricato.');
+  const wsOf = k => WB.getWorksheet(XSHEETS[k][0]);
+  const ident = (k, row, expected) => {
+    const ws = wsOf(k), head = xHeader(ws)[1];
+    if (ctext(ws, row, 1) !== String(expected).trim()) throw new Error('Il file è cambiato nel frattempo: ricarica la pagina.');
+    return xIdent(ws, head, row);
+  };
+  let op = null;
+  if (fn === 'api_list') return xReadAll(WB);
+  if (fn === 'api_add') op = { t: 'add', k: a[0], item: a[1] };
+  else if (fn === 'api_update') op = { t: 'upd', k: a[0], w: ident(a[0], a[1], a[2]), item: a[3] };
+  else if (fn === 'api_delete') op = { t: 'del', k: a[0], w: ident(a[0], a[1], a[2]) };
+  else if (fn === 'api_drink') op = { t: 'drink', k: a[0], w: ident(a[0], a[1], a[2]), ff: !!a[3], y: new Date().getFullYear() };
+  else throw new Error('Funzione sconosciuta');
+  op.id = uid();
+  xApply(WB, op);
+  OPS.push(op); persistOps(); paintBadge();
+  return xReadAll(WB);
+}
+function call(fn, ...args) { return new Promise((res, rej) => { try { res(localApi(fn, args)); } catch (e) { rej(e); } }); }
+async function run(fn, args, okMsg) {
+  try { S.data = await call(fn, ...args); if (okMsg) toast(okMsg); return true; }
+  catch (e) { toast(String(e.message).replace(/^Error:\s*/, ''), true); return false; }
+  finally { render(); }
+}
+
+// ---------- sincronizzazione (solo su richiesta) ----------
+const sync = { busy: false, msg: '', at: null };
+const sCfg = () => { const c = lsJSON(SYNC_KEY); return c && c.repo && c.token ? c : null; };
+const httpErr = r => { const e = new Error('http ' + r.status); e.status = r.status; return e; };
+function ghReq(cfg, method, path, body) {
+  const h = { Authorization: 'Bearer ' + cfg.token, Accept: 'application/vnd.github+json' };
+  if (body) h['Content-Type'] = 'application/json';
+  return fetch('https://api.github.com/repos/' + cfg.repo + path, { method, cache: 'no-store', headers: h, body: body ? JSON.stringify(body) : undefined });
+}
+function readExp(resp, cfg) {
+  try {
+    const hx = resp && resp.headers && resp.headers.get && resp.headers.get('github-authentication-token-expiration'); if (!hx) return;
+    const tx = Date.parse(hx.replace(' UTC', 'Z').replace(' ', 'T'));
+    if (!isNaN(tx) && tx !== cfg.expAuto) { cfg.expAuto = tx; lsSet(SYNC_KEY, JSON.stringify(cfg)); }
+  } catch (e) {}
+}
+function syncErr(e) {
+  const s = e && e.status;
+  if (s === 401) return 'token non valido o scaduto.';
+  if (s === 403) return 'il token non ha i permessi (serve Contents: Read and write) oppure limite GitHub superato.';
+  if (s === 404) return 'repository non trovato. Controlla il nome e l\'accesso del token.';
+  if (s === 409 || s === 422) return 'conflitto, riprova tra poco.';
+  if (e && e.message && !/^http|Failed to fetch|NetworkError|Load failed/i.test(e.message)) return e.message;
+  return 'nessuna connessione o GitHub non raggiungibile.';
+}
+function tokenInfo() {
+  const c = sCfg(); if (!c) return null;
+  const t = c.expAuto || (c.exp ? new Date(c.exp + 'T23:59:59').getTime() : 0);
+  if (!t || isNaN(t)) return { txt: 'scadenza token non nota', warn: false };
+  const sod = x => { const d = new Date(x); d.setHours(0, 0, 0, 0); return d.getTime(); };
+  const days = Math.round((sod(t) - sod(Date.now())) / 86400000);
+  if (days < 0) return { txt: 'token scaduto, creane uno nuovo', warn: true };
+  if (days === 0) return { txt: 'il token scade oggi', warn: true };
+  return { txt: 'il token scade tra ' + days + (days === 1 ? ' giorno' : ' giorni'), warn: days <= 7 };
+}
+function syncLabel() {
+  const c = sCfg();
+  if (!c) return 'Sincronizzazione non attiva: i dati restano su questo telefono.';
+  if (sync.msg) return sync.msg;
+  const pend = OPS.length ? OPS.length + (OPS.length === 1 ? ' modifica da inviare' : ' modifiche da inviare') : 'nessuna modifica in sospeso';
+  return c.repo + '/' + (c.path || 'Vino.xlsx') + ' · ' + pend + (META.at ? ' · ultima sincronizzazione ' + new Date(META.at).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
+}
+function paintFoot() {
+  const f = $('foot'); if (!f) return; const ti = tokenInfo();
+  f.textContent = 'Versione ' + APP_VERSION + (ti ? ' · ' + ti.txt : ''); f.classList.toggle('warn', !!(ti && ti.warn));
+}
+function paintBadge() {
+  const b = $('badge'); if (!b) return; const n = OPS.length + (META.force ? 1 : 0);
+  b.hidden = !n; b.textContent = n > 99 ? '99+' : n;
+  [].forEach.call(document.querySelectorAll('.syncmsg'), el => (el.textContent = syncLabel()));
+  paintFoot();
+}
+async function syncNow() {
+  const cfg = sCfg();
+  if (!cfg) { openSettings(); return; }
+  if (sync.busy) return;
+  sync.busy = true; sync.msg = 'Sincronizzo…'; $('busy').hidden = false; paintBadge();
+  const path = '/contents/' + encodeURIComponent(cfg.path || 'Vino.xlsx').replace(/%2F/g, '/');
+  let result = '';
+  try {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const r = await ghReq(cfg, 'GET', path); readExp(r, cfg);
+      let sha = null, remote = null;
+      if (r.status === 404) { const rr = await ghReq(cfg, 'GET', ''); readExp(rr, cfg); if (!rr.ok) throw httpErr(rr); }
+      else if (r.ok) { const j = await r.json(); sha = j.sha; if (!j.content) throw new Error('Il file è troppo grande per essere letto da GitHub in questo modo.'); remote = b64ToBytes(j.content); }
+      else throw httpErr(r);
+      if (!remote && !BASE) throw new Error('Nel repo non c\'è ' + (cfg.path || 'Vino.xlsx') + ': caricalo su GitHub oppure scegli il file dal telefono.');
+      let wb, pushOps = OPS.slice(), skipped = 0;
+      if (META.force || !remote) { wb = WB; }
+      else {
+        wb = await xLoad(remote);
+        const done = appliedIds(wb), applied = [];
+        pushOps = [];
+        for (const op of OPS) {
+          if (done.has(op.id)) continue;
+          try { xApply(wb, op); applied.push(op.id); pushOps.push(op); } catch (e) { skipped++; }
+        }
+        markApplied(wb, applied);
+        if (!pushOps.length && !skipped) { /* niente da inviare: solo scarico */ }
+      }
+      const needPush = META.force || !remote || pushOps.length > 0;
+      let newBytes, newSha = sha;
+      if (needPush) {
+        if (wb === WB) markApplied(wb, OPS.map(o => o.id));
+        newBytes = await xBytes(wb);
+        const put = await ghReq(cfg, 'PUT', path, { message: 'cantina ' + new Date().toISOString().slice(0, 10), content: bytesToB64(newBytes), sha: sha || undefined });
+        if (put.status === 409 || put.status === 422) { if (attempt === 2) throw httpErr(put); continue; }
+        if (!put.ok) throw httpErr(put);
+        try { const pj = await put.json(); newSha = pj && pj.content && pj.content.sha || sha; } catch (e) {}
+        result = pushOps.length ? 'Inviate ' + pushOps.length + (pushOps.length === 1 ? ' modifica' : ' modifiche') : 'File caricato';
+      } else { newBytes = remote; result = 'Già aggiornato'; }
+      BASE = bytesToB64(newBytes);
+      if (!lsSet(K_BASE, BASE)) throw new Error('Memoria del telefono piena.');
+      META = { sha: newSha, at: Date.now(), force: false }; persistMeta();
+      OPS = []; persistOps();
+      await rebuild(); S.data = xReadAll(WB);
+      if (skipped) result += ' · ' + skipped + ' non applicate (bottiglia cambiata altrove)';
+      break;
+    }
+    sync.msg = ''; toast(result); 
+  } catch (e) { sync.msg = 'Sincronizzazione non riuscita: ' + syncErr(e); toast(sync.msg, true); }
+  sync.busy = false; $('busy').hidden = true; render(); if (gsetOpen()) openSettings();
+}
+async function loadLocalFile(file) {
+  if (OPS.length) { toast('Prima sincronizza le modifiche in sospeso (o scarica il file attuale).', true); return; }
+  $('busy').hidden = false;
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer()), wb = await xLoad(bytes); xReadAll(wb);
+    BASE = bytesToB64(bytes); if (!lsSet(K_BASE, BASE)) throw new Error('Memoria del telefono piena.');
+    META = { sha: null, at: 0, force: true }; persistMeta(); OPS = []; persistOps();
+    await rebuild(); S.data = xReadAll(WB); toast('File caricato: premi Sincronizza per salvarlo nel repo');
+  } catch (e) { toast('File non valido: ' + e.message, true); }
+  $('busy').hidden = true; render(); closeGset();
+}
+async function downloadXlsx() {
+  if (!WB) { toast('Nessun file da scaricare', true); return; }
+  const u8 = await xBytes(WB), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([u8], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  a.download = 'Vino.xlsx'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+// ---------- impostazioni, uscita, navigazione ----------
+const gsetOpen = () => !!$('gset').innerHTML;
+function closeGset() { $('gset').innerHTML = ''; }
+function openSettings() {
+  const c = sCfg(), g = lsJSON('gym-sync') || lsJSON('casa-sync');
+  $('gset').innerHTML = `<div class="scrim" data-gx="bg"><div class="sheet" role="dialog" aria-modal="true">
+    <h3>Sincronizzazione</h3><div class="sub syncmsg">${esc(syncLabel())}</div>
+    <div class="field"><label>Repository dati (utente/nome)</label><input id="sy-repo" value="${esc((c && c.repo) || (g && g.repo) || 'variedeventuali/scheda-dati')}" autocapitalize="off" autocomplete="off"></div>
+    <div class="field"><label>File Excel nel repository</label><input id="sy-path" value="${esc((c && c.path) || 'Vino.xlsx')}" autocapitalize="off" autocomplete="off"></div>
+    <div class="field"><label>Token GitHub${c ? ' (già salvato: lascia vuoto per tenerlo)' : ''}</label><input id="sy-token" type="password" autocomplete="off" placeholder="${c ? '••••••••' : (g && g.token ? 'oppure usa quello di palestra/casa' : 'github_pat_…')}"></div>
+    <div class="field"><label>Scadenza token (facoltativa, AAAA-MM-GG)</label><input id="sy-exp" value="${esc((c && c.exp) || (g && g.exp) || '')}" placeholder="2027-01-31"></div>
+    <div class="actions">
+      <button class="btn primary" data-gx="save">Salva e sincronizza</button>
+      ${g && g.token ? '<button class="btn" data-gx="gym">Usa il token di palestra/casa</button>' : ''}
+      ${c ? '<button class="btn" data-gx="sync">Sincronizza ora</button>' : ''}
+      <button class="btn" data-gx="loadfile">Carica Vino.xlsx dal telefono…</button><input type="file" id="sy-file" accept=".xlsx" hidden>
+      <button class="btn" data-gx="download">Scarica l'Excel aggiornato</button>
+      ${c ? '<button class="btn danger" data-gx="off">Scollega</button>' : ''}
+      <button class="btn" data-gx="close">Chiudi</button></div>
+    <p class="note">La sincronizzazione parte solo quando premi il pulsante ⟳ in alto. Il file Excel nel repo è sempre quello aggiornato: le modifiche fatte su un telefono vengono applicate sopra l'ultima versione presente nel repo.</p>
+  </div></div>`;
+}
+function saveCfg(useGym) {
+  const repo = $('sy-repo').value.trim(), path = $('sy-path').value.trim() || 'Vino.xlsx', exp = $('sy-exp').value.trim(), old = sCfg();
+  let tk = $('sy-token').value.trim(), g = null;
+  if (useGym) { g = lsJSON('gym-sync') || lsJSON('casa-sync'); if (g && g.token) tk = g.token; }
+  if (!tk && old) tk = old.token;
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !tk) { sync.msg = 'Inserisci repository (utente/nome) e token.'; paintBadge(); return false; }
+  const cfg = { repo, path, token: tk, exp: exp || (g && g.exp) || '' };
+  if (old && old.token === tk && old.expAuto) cfg.expAuto = old.expAuto; else if (g && g.expAuto && g.token === tk) cfg.expAuto = g.expAuto;
+  lsSet(SYNC_KEY, JSON.stringify(cfg)); sync.msg = ''; return true;
+}
+function askExit() {
+  $('gset').innerHTML = '<div class="scrim" data-gx="bg"><div class="sheet"><h3>Vuoi uscire?</h3><p class="sub">Le modifiche non ancora sincronizzate restano sul telefono.</p><div class="actions two"><button class="btn primary" data-gx="exit-no">Resta</button><button class="btn" data-gx="exit-yes">Esci</button></div></div></div>';
+}
+let exiting = false;
+function initHistory() {
+  try { window.history.replaceState({ h: 0 }, ''); window.history.pushState({ h: 1 }, ''); } catch (e) {}
+  window.addEventListener('popstate', () => {
+    if (exiting) return;
+    try { window.history.pushState({ h: 1 }, ''); } catch (e) {}
+    if (gsetOpen()) { closeGset(); return; }
+    if (S.modal) { S.modal = null; render(); return; }
+    askExit();
+  });
+}
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-gx]'); if (!t) return;
+  const a = t.dataset.gx;
+  if (a === 'bg') { if (e.target === t) closeGset(); return; }
+  if (a === 'settings') openSettings();
+  else if (a === 'sync') { closeGset(); syncNow(); }
+  else if (a === 'close') closeGset();
+  else if (a === 'save') { if (saveCfg(false)) { closeGset(); syncNow(); } }
+  else if (a === 'gym') { if (saveCfg(true)) { closeGset(); syncNow(); } }
+  else if (a === 'off') { lsSet(SYNC_KEY, ''); openSettings(); render(); }
+  else if (a === 'loadfile') $('sy-file').click();
+  else if (a === 'download') downloadXlsx();
+  else if (a === 'exit-no') closeGset();
+  else if (a === 'exit-yes') { exiting = true; closeGset(); try { window.history.go(-2); } catch (er) {} setTimeout(() => { exiting = false; toast('Puoi chiudere l\'app'); }, 600); }
+});
+document.addEventListener('change', e => { if (e.target.id === 'sy-file' && e.target.files[0]) loadLocalFile(e.target.files[0]); });
+
+async function boot() {
+  BASE = lsGet(K_BASE); META = Object.assign({ sha: null, at: 0, force: false }, lsJSON(K_META) || {}); OPS = lsJSON(K_OPS) || [];
+  S.loading = true; render();
+  try { if (BASE) { await rebuild(); S.data = xReadAll(WB); } } catch (e) { toast('File locale non leggibile: ' + e.message, true); }
+  S.loading = false; render();
+  initHistory();
+}
+
+// ---------- rendering ----------
+function render() {
+  renderSummary(); renderTabs(); renderTools(); renderView(); renderModal();
+  $('fab').hidden = S.tab === 'stats' || !S.data;
+  paintBadge();
+}
+
+function renderSummary() {
+  if (!S.data) { $('sum').textContent = ''; return; }
+  const stock = [...rows('rossi'), ...rows('nonrossi'), ...rows('dolci'), ...rows('magnum')];
+  const n = sumBy(stock, r => num(r['Quantità']));
+  const f = sumBy([...rows('rossi'), ...rows('nonrossi')], r => num(r.Cantinetta));
+  const v = sumBy(stock, r => num(r.Valore) * num(r['Quantità']));
+  $('sum').innerHTML = `<b>${n}</b> bottiglie · <b>${f}</b> in cantinetta<br>valore <b>${eurShort(v)}</b>`;
+}
+
+function renderTabs() {
+  $('tabs').innerHTML = TABS.map(([k, l]) => {
+    const c = k === 'stats' ? '' : `<small>${S.data ? rows(k).length : ''}</small>`;
+    return `<button class="tab" role="tab" aria-selected="${S.tab === k}" data-tab="${k}">${l}${c}</button>`;
+  }).join('');
+}
+
+function renderTools() {
+  const el = $('tools');
+  if (S.tab === 'stats') { el.innerHTML = ''; return; }
+  const sorts = S.tab === 'bevuti' ? '' :
+    `<select id="sort" aria-label="Ordina">${Object.entries(SORTS)
+      .filter(([k]) => simple(S.tab) ? ['valore', 'nome', 'qty'].includes(k) : true)
+      .map(([k, [l]]) => `<option value="${k}" ${S.sort === k ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  const fridge = isWine(S.tab) ? `<button class="chip" id="fridge" aria-pressed="${S.fridge}">Solo in cantinetta</button>` : '';
+  el.innerHTML = `<input type="search" id="q" placeholder="Cerca nome, cantina, anno…" value="${esc(S.q)}" autocomplete="off">${sorts ? sorts : '<span></span>'}
+    ${colorChips()}<div class="row2">${fridge}<span class="count" id="count"></span></div>`;
+}
+
+function colorChips() {
+  if (S.tab !== 'nonrossi') return '';
+  const cs = colors(), none = rows('nonrossi').filter(r => !String(r.Colore || '').trim()).length;
+  const chip = (v, label, n) => `<button class="chip" data-color="${esc(v)}" aria-pressed="${S.color === v}">${v && v !== '__none' ? `<i class="dot" style="background:${colorHex(v)}"></i>` : ''}${esc(label)} <small>${n}</small></button>`;
+  return `<div class="colors">${chip('', 'Tutti', rows('nonrossi').length)}${cs.map(([c, n]) => chip(c, c, n)).join('')}${none ? chip('__none', 'Senza colore', none) : ''}</div>`;
+}
+
+function filtered() {
+  const q = fold(S.q).trim();
+  let list = rows(S.tab).slice();
+  if (q) list = list.filter(r => fold([r.Nome, r.Cantina, r.Anno, r.Colore].join(' ')).includes(q));
+  if (S.fridge && isWine(S.tab)) list = list.filter(r => num(r.Cantinetta) > 0);
+  if (S.tab === 'nonrossi' && S.color) list = list.filter(r => S.color === '__none' ? !String(r.Colore || '').trim() : fold(r.Colore).trim() === fold(S.color).trim());
+  return list;
+}
+
+function renderView() {
+  const v = $('view');
+  if (!S.data) {
+    v.innerHTML = S.loading ? '<div class="empty">Carico la cantina…</div>' :
+      '<div class="empty">Nessun file Excel caricato.<br>Collega GitHub e premi Sincronizza per scaricare Vino.xlsx, oppure caricalo dal telefono.<br><button class="btn primary" data-gx="settings">Impostazioni</button></div>';
+    return;
+  }
+  if (S.tab === 'stats') { v.innerHTML = statsHTML(); return; }
+  renderList();
+}
+
+function renderList() {
+  const v = $('view');
+  let list = filtered();
+  if ($('count')) $('count').textContent = list.length + (list.length === 1 ? ' voce' : ' voci');
+  if (!list.length) { v.innerHTML = '<div class="empty">Nessun risultato</div>'; return; }
+
+  if (S.tab === 'bevuti') {
+    list.sort((a, b) => num(b.Quando) - num(a.Quando) || b.row - a.row);
+    let html = '', cur = null;
+    list.forEach(r => {
+      if (r.Quando !== cur) { cur = r.Quando; html += `<div class="year-h">${esc(cur || '—')}</div>`; }
+      html += itemHTML(r, true);
+    });
+    v.innerHTML = `<div class="list">${html}</div>`;
+    return;
+  }
+  list.sort(SORTS[S.sort][1]);
+  v.innerHTML = `<div class="list">${list.map(r => itemHTML(r, false)).join('')}</div>`;
+}
+
+function itemHTML(r, log) {
+  const meta = [r.Cantina && String(r.Cantina).trim(), r.Anno && r.Anno !== '-' ? r.Anno : ''].filter(Boolean).join(' · ');
+  const q = num(r['Quantità']);
+  const lead = log ? `<div class="qty zero"><b>✓</b><small>bevuta</small></div>`
+    : `<div class="qty ${q ? '' : 'zero'}"><b>${q}</b><small>${q === 1 ? 'bott.' : 'bott.'}</small></div>`;
+  let badge = '';
+  if (!log && isWine(S.tab)) {
+    const c = Math.min(num(r.Cantinetta), q), rest = q - c;
+    const col = String(r.Colore || '').trim();
+    badge = '<div>' + (col ? `<span class="badge plain"><i class="dot" style="background:${colorHex(col)}"></i>${esc(col)}</span> ` : '') + (c ? `<span class="badge">${c} in cantinetta</span> ` : '') + (rest ? `<span class="badge plain">${rest} in cantina</span>` : '') + '</div>';
+  }
+  return `<button class="item" data-row="${r.row}">${lead}
+    <div><div class="name">${esc(String(r.Nome).trim())}</div>${meta ? `<div class="meta">${esc(meta)}</div>` : ''}${badge}</div>
+    <div class="right">${!log && q > 1 && r.Valore
+      ? `<div class="v">${eur(num(r.Valore) * q)}</div><div class="meta">${q} × ${eur(r.Valore)}</div>`
+      : `<div class="v">${r.Valore ? eur(r.Valore) : '—'}</div>`}</div></button>`;
+}
+
+// ---------- statistiche ----------
+function bars(items, fmt) {
+  const max = Math.max(...items.map(i => i[1]), 1);
+  return items.map(([l, n]) => `<div class="bar"><span class="lab" title="${esc(l)}">${esc(l)}</span>
+    <span class="track"><span class="fill" style="width:${(n / max * 100).toFixed(1)}%;display:block"></span></span>
+    <span class="num">${fmt ? fmt(n) : n}</span></div>`).join('');
+}
+function statsHTML() {
+  const wines = [...rows('rossi'), ...rows('nonrossi')];
+  const stock = [...wines, ...rows('dolci'), ...rows('magnum')];
+  const bott = sumBy(stock, r => num(r['Quantità']));
+  const val = sumBy(stock, r => num(r.Valore) * num(r['Quantità']));
+  const spent = sumBy(stock, r => num(r.Prezzo) * num(r['Quantità']));
+  const fridge = sumBy(wines, r => num(r.Cantinetta));
+
+  const kinds = ['rossi', 'nonrossi', 'dolci', 'magnum'].map(k => [TABS.find(t => t[0] === k)[1], sumBy(rows(k), r => num(r['Quantità']))]);
+
+  const byCantina = {};
+  wines.forEach(r => { const c = String(r.Cantina || '').trim(); if (c) byCantina[c] = (byCantina[c] || 0) + num(r['Quantità']); });
+  const topC = Object.entries(byCantina).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+  const byYear = {};
+  wines.forEach(r => { const y = yr(r.Anno); if (y) byYear[y] = (byYear[y] || 0) + num(r['Quantità']); });
+  const years = Object.entries(byYear).sort((a, b) => a[0] - b[0]);
+
+  const drunk = {};
+  rows('bevuti').forEach(r => { const y = r.Quando || '—'; (drunk[y] = drunk[y] || { n: 0, v: 0 }); drunk[y].n++; drunk[y].v += num(r.Valore); });
+  const dr = Object.entries(drunk).sort((a, b) => b[0] - a[0]);
+
+  return `<div class="kpis">
+    <div class="kpi"><div class="n">${bott}</div><div class="l">bottiglie in cantina</div></div>
+    <div class="kpi"><div class="n">${fridge}</div><div class="l">in cantinetta</div></div>
+    <div class="kpi"><div class="n">${eurShort(val)}</div><div class="l">valore stimato</div></div>
+    <div class="kpi"><div class="n">${eurShort(spent)}</div><div class="l">speso (prezzi d'acquisto)</div></div></div>
+  <div class="card"><h2>Per tipo (bottiglie)</h2>${bars(kinds)}</div>
+  <div class="card"><h2>Non rossi per colore (bottiglie)</h2>${bars(Object.entries(rows('nonrossi').reduce((m, r) => { const c = String(r.Colore || '').trim() || 'Senza colore'; m[c] = (m[c] || 0) + num(r['Quantità']); return m; }, {})).sort((a, b) => b[1] - a[1]))}</div>
+  <div class="card"><h2>Cantine più presenti (bottiglie)</h2>${bars(topC)}</div>
+  <div class="card"><h2>Per annata (bottiglie)</h2>${years.length ? bars(years) : '<div class="meta">Nessuna annata</div>'}</div>
+  <div class="card"><h2>Bevute per anno</h2>${dr.length ? bars(dr.map(([y, o]) => [y, o.n]), n => n) : '<div class="meta">Ancora nessuna</div>'}
+    <div class="meta" style="margin-top:8px">${dr.map(([y, o]) => `${esc(y)}: valore bevuto ${eurShort(o.v)}`).join(' · ')}</div></div>`;
+}
+
+// ---------- modale ----------
+const find = (k, row) => rows(k).find(r => r.row === row);
+
+function renderModal() {
+  const m = S.modal, el = $('modal');
+  if (!m) { el.innerHTML = ''; return; }
+  let body = '';
+  if (m.mode === 'detail') body = detailHTML(m);
+  else if (m.mode === 'edit' || m.mode === 'add') body = formHTML(m);
+  else if (m.mode === 'drink') body = drinkHTML(m);
+  else if (m.mode === 'del') body = delHTML(m);
+  if (!body) { S.modal = null; el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="scrim" data-close="1"><div class="sheet" role="dialog" aria-modal="true">${body}</div></div>`;
+}
+
+function detailHTML(m) {
+  const r = find(m.key, m.row); if (!r) return '';
+  const log = m.key === 'bevuti', q = num(r['Quantità']);
+  const meta = [r.Cantina && String(r.Cantina).trim(), r.Anno && r.Anno !== '-' ? r.Anno : ''].filter(Boolean).join(' · ');
+  const facts = [['Prezzo d’acquisto (cad.)', r.Prezzo ? eur(r.Prezzo) : '—'], ['Valore (cad.)', r.Valore ? eur(r.Valore) : '—']];
+  if (!simple(m.key)) facts.push(['Acquisto', fmtAcq(r.Acquisto)]);
+  if (m.key === 'nonrossi') facts.push(['Colore', r.Colore ? String(r.Colore).trim() : '—']);
+  if (log) facts.push(['Bevuta nel', r.Quando || '—']); else facts.push(['Quantità', q + (q === 1 ? ' bottiglia' : ' bottiglie')]);
+  const stepper = isWine(m.key) ? `<div class="stepper"><span>In cantinetta<br><span class="meta">su ${q} totali · ${Math.max(0, q - num(r.Cantinetta))} in cantina</span></span><span class="ctl">
+      <button data-act="fridge-" aria-label="Meno">−</button><b>${num(r.Cantinetta)}</b><button data-act="fridge+" aria-label="Più">+</button></span></div>` : '';
+  const actions = log
+    ? `<div class="actions"><button class="btn danger" data-act="del">Elimina dallo storico</button><button class="btn" data-close="1">Chiudi</button></div>`
+    : `<div class="actions"><button class="btn primary" data-act="drink" ${q < 1 ? 'disabled' : ''}>Bevuta 🍷</button>
+       <div class="actions two"><button class="btn" data-act="edit">Modifica</button><button class="btn danger" data-act="del">Elimina</button></div>
+       <button class="btn" data-close="1">Chiudi</button></div>`;
+  return `<h3>${esc(String(r.Nome).trim())}</h3><div class="sub">${esc(meta) || '&nbsp;'}</div>
+    <div class="facts">${facts.map(([l, v]) => `<div class="fact"><div class="l">${l}</div><div class="v">${esc(v)}</div></div>`).join('')}</div>${stepper}${actions}`;
+}
+
+function formHTML(m) {
+  const r = m.mode === 'edit' ? find(m.key, m.row) : { 'Quantità': 1, Cantinetta: 0 };
+  if (!r) return '';
+  const fs = FIELDS[m.key];
+  const inputs = fs.map(f => {
+    let val = r[f.k]; if (val == null || val === '-') val = '';
+    return `<div class="field" style="${f.full ? 'grid-column:1/-1' : ''}"><label for="f_${esc(f.k)}">${f.l}</label>
+      <input id="f_${esc(f.k)}" data-k="${esc(f.k)}" ${f.num ? 'type="number" inputmode="decimal" step="any" min="0"' : 'type="text"'} ${f.ph ? `placeholder="${f.ph}"` : ''} ${f.k === 'Cantina' ? 'list="cantine" autocomplete="off"' : (f.list ? `list="${f.list}" autocomplete="off"` : '')} value="${esc(val)}"></div>`;
+  }).join('');
+  const dlc = m.key === 'nonrossi' ? `<datalist id="colori">${colors().map(([c]) => `<option value="${esc(c)}">`).join('')}</datalist>` : '';
+  const dl = dlc + (isWine(m.key) ? `<datalist id="cantine">${[...new Set([...rows('rossi'), ...rows('nonrossi')].map(x => String(x.Cantina || '').trim()).filter(Boolean))].sort(cmpStr).map(c => `<option value="${esc(c)}">`).join('')}</datalist>` : '');
+  return `<h3>${m.mode === 'add' ? 'Nuova bottiglia' : 'Modifica'}</h3><div class="sub">${m.mode === 'add' ? TABS.find(t => t[0] === m.key)[1] : esc(String(r.Nome).trim())}</div>
+    <form id="form"><div class="grid2">${inputs}</div>${dl}${m.mode === 'add' ? '<div class="dups" id="dups"></div>' : ''}
+    <div class="actions two" style="margin-top:6px"><button type="button" class="btn" data-act="${m.mode === 'add' ? 'close' : 'back'}">Annulla</button><button class="btn primary" type="submit">Salva</button></div></form>`;
+}
+
+function drinkHTML(m) {
+  const r = find(m.key, m.row); if (!r) return '';
+  const q = num(r['Quantità']), c = num(r.Cantinetta);
+  return `<h3>Bevuta</h3><div class="sub">${esc(String(r.Nome).trim())}</div>
+    <p>Registro una bottiglia nello storico <b>Bevuti</b> (${new Date().getFullYear()}) e ne scalo una dalla quantità.</p>
+    ${isWine(m.key) && c > 0 ? `<label class="check"><input type="checkbox" id="fromFridge" checked> Toglila dalla cantinetta</label>` : ''}
+    ${q === 1 ? '<div class="note">Era l’ultima bottiglia: la riga verrà rimossa dalla lista (resta nello storico).</div>' : ''}
+    <div class="actions two"><button class="btn" data-act="back">Annulla</button><button class="btn primary" data-act="drink-ok">Conferma</button></div>`;
+}
+
+function delHTML(m) {
+  const r = find(m.key, m.row); if (!r) return '';
+  return `<h3>Eliminare?</h3><div class="sub">${esc(String(r.Nome).trim())}</div>
+    <p>La riga verrà cancellata dal foglio Google. ${m.key === 'bevuti' ? '' : 'Se l’hai bevuta usa “Bevuta”, così resta nello storico.'}</p>
+    <div class="actions two"><button class="btn" data-act="back">Annulla</button><button class="btn dangerfill" data-act="del-ok">Elimina</button></div>`;
+}
+
+function readForm() {
+  const o = {};
+  document.querySelectorAll('#form [data-k]').forEach(i => (o[i.dataset.k] = i.value.trim()));
+  return o;
+}
+
+// ---------- controllo doppioni (nel modulo "Nuova bottiglia") ----------
+const KIND = { rossi: 'Rossi', nonrossi: 'Non rossi', dolci: 'Dolci', magnum: 'Magnum', bevuti: 'Bevuti' };
+function updateDups() {
+  const box = $('dups'); if (!box || !S.modal) return;
+  const v = k => (document.querySelector(`#form [data-k="${k}"]`) || {}).value || '';
+  const nome = fold(v('Nome')).trim(), cant = fold(v('Cantina')).trim(), anno = v('Anno').trim();
+  const all = ['rossi', 'nonrossi', 'dolci', 'magnum', 'bevuti'].flatMap(k => rows(k).map(r => ({ ...r, _k: k })));
+  let html = '';
+
+  const toks = nome.split(/\s+/).filter(t => t.length >= 2);
+  if (nome.length >= 3 && toks.length) {
+    const hits = all.filter(r => { const h = fold(r.Nome + ' ' + (r.Cantina || '')); return toks.every(t => h.includes(t)); })
+      .map(r => ({ r, sameYear: anno && String(r.Anno) === anno, sameCant: cant && fold(r.Cantina).trim() === cant }))
+      .sort((a, b) => (b.sameYear - a.sameYear) || (b.sameCant - a.sameCant) || (a.r._k === 'bevuti') - (b.r._k === 'bevuti'));
+    if (hits.length) {
+      html += `<h4>Hai già qualcosa di simile (${hits.length})</h4>` + hits.slice(0, 6).map(({ r, sameYear }) => {
+        const drunk = r._k === 'bevuti', q = num(r['Quantità']);
+        const meta = [r.Cantina && String(r.Cantina).trim(), r.Anno && r.Anno !== '-' ? r.Anno : ''].filter(Boolean).join(' · ');
+        const where = drunk ? `già bevuto nel ${r.Quando || '—'}` : `${KIND[r._k]} · ${q} ${q === 1 ? 'bottiglia' : 'bottiglie'}`;
+        return `<div class="dup ${sameYear ? 'same' : ''}"><div><div class="name">${esc(String(r.Nome).trim())}</div>
+          <div class="meta">${esc(meta)}${meta ? ' · ' : ''}${where}${sameYear ? ' · <b>stessa annata</b>' : ''}</div></div>
+          <div class="btns"><button type="button" data-dact="open" data-dk="${r._k}" data-drow="${r.row}">Apri</button>${drunk ? '' : `<button type="button" class="plus" data-dact="plus" data-dk="${r._k}" data-drow="${r.row}">+1</button>`}</div></div>`;
+      }).join('') + (hits.length > 6 ? `<div class="meta">…e altri ${hits.length - 6}. Affina la ricerca scrivendo più parole.</div>` : '');
+    } else if (nome.length >= 4) {
+      html += '<div class="hint ok">Nessun vino con questo nome: è nuovo.</div>';
+    }
+  }
+
+  if (cant.length >= 2) {
+    const mine = all.filter(r => r._k !== 'bevuti' && !simple(r._k) && fold(r.Cantina).includes(cant));
+    const names = [...new Set(mine.map(r => String(r.Cantina).trim()))];
+    const drunkN = all.filter(r => r._k === 'bevuti' && fold(r.Cantina).includes(cant)).length;
+    if (mine.length) {
+      const b = sumBy(mine, r => num(r['Quantità']));
+      html += `<div class="hint">Cantina già censita: <b>${esc(names.slice(0, 2).join(', '))}</b>${names.length > 2 ? '…' : ''} — ${mine.length} ${mine.length === 1 ? 'vino' : 'vini'}, ${b} bottiglie${drunkN ? `, ${drunkN} già bevut${drunkN === 1 ? 'a' : 'e'}` : ''}.<br>
+        <span class="meta">${mine.slice(0, 5).map(r => esc(String(r.Nome).trim() + (r.Anno && r.Anno !== '-' ? ' ' + r.Anno : ''))).join(' · ')}${mine.length > 5 ? ` · +${mine.length - 5}` : ''}</span></div>`;
+    } else {
+      html += `<div class="hint ok">Cantina nuova: non è ancora censita${drunkN ? ` (ma ${drunkN} ${drunkN === 1 ? 'bottiglia bevuta' : 'bottiglie bevute'} nello storico)` : ''}.</div>`;
+    }
+  }
+  box.innerHTML = html;
+}
+
+// ---------- eventi ----------
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-tab],[data-row],[data-act],[data-close],[data-dact],[data-color],#fridge,#fab');
+  if (!t) return;
+  if (t.dataset.dact) {
+    const k = t.dataset.dk, row = +t.dataset.drow, r = find(k, row); if (!r) return;
+    if (t.dataset.dact === 'open') { S.tab = k; S.q = ''; S.fridge = false; S.modal = { mode: 'detail', key: k, row }; render(); return; }
+    if (await run('api_update', [k, row, r.Nome, { 'Quantità': num(r['Quantità']) + 1 }], '+1 bottiglia aggiunta')) { S.tab = k; S.modal = null; render(); }
+    return;
+  }
+  if (t.dataset.tab) { S.tab = t.dataset.tab; S.q = ''; S.fridge = false; S.color = ''; if (!SORTS[S.sort] || (simple(S.tab) && !['valore', 'nome', 'qty'].includes(S.sort))) S.sort = 'valore'; render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.color !== undefined) { S.color = t.dataset.color; render(); return; }
+  if (t.id === 'fridge') { S.fridge = !S.fridge; render(); return; }
+  if (t.id === 'fab') { S.modal = { mode: 'add', key: S.tab === 'bevuti' ? 'rossi' : S.tab }; render(); return; }
+  if (t.dataset.row) { S.modal = { mode: 'detail', key: S.tab, row: +t.dataset.row }; render(); return; }
+  if (t.dataset.close) { if (t.classList.contains('scrim') && e.target !== t) return; S.modal = null; render(); return; }
+
+  const m = S.modal, act = t.dataset.act;
+  if (!m || !act) return;
+  const r = m.row ? find(m.key, m.row) : null;
+  if (act === 'close') { S.modal = null; render(); }
+  else if (act === 'back') { m.mode = 'detail'; render(); }
+  else if (act === 'edit') { m.mode = 'edit'; render(); }
+  else if (act === 'del') { m.mode = 'del'; render(); }
+  else if (act === 'drink') { m.mode = 'drink'; render(); }
+  else if (act === 'fridge+' || act === 'fridge-') {
+    const next = Math.max(0, Math.min(num(r['Quantità']), num(r.Cantinetta) + (act === 'fridge+' ? 1 : -1)));
+    if (next !== num(r.Cantinetta)) await run('api_update', [m.key, m.row, r.Nome, { Cantinetta: next }]);
+  } else if (act === 'drink-ok') {
+    const ff = $('fromFridge') ? $('fromFridge').checked : false;
+    const wasLast = num(r['Quantità']) <= 1;
+    if (await run('api_drink', [m.key, m.row, r.Nome, ff], 'Registrata tra i bevuti')) {
+      if (wasLast) S.modal = null; else m.mode = 'detail';
+      render();
+    }
+  } else if (act === 'del-ok') {
+    if (await run('api_delete', [m.key, m.row, r.Nome], 'Eliminata')) { S.modal = null; render(); }
+  }
+});
+
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'form') return;
+  e.preventDefault();
+  const m = S.modal, item = readForm();
+  if (!item.Nome) { toast('Il nome è obbligatorio', true); return; }
+  const ok = m.mode === 'add'
+    ? await run('api_add', [m.key, item], 'Aggiunta')
+    : await run('api_update', [m.key, m.row, find(m.key, m.row).Nome, item], 'Salvata');
+  if (ok) { if (m.mode === 'add') S.modal = null; else m.mode = 'detail'; render(); }
+});
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'q') { S.q = e.target.value; renderList(); }
+  else if (e.target.closest && e.target.closest('#form') && ['Nome', 'Cantina', 'Anno'].includes(e.target.dataset.k)) updateDups();
+});
+document.addEventListener('change', e => { if (e.target.id === 'sort') { S.sort = e.target.value; renderList(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.modal) { S.modal = null; render(); } });
+
+// ricarica i dati quando torni sulla scheda (utile se il file viene modificato altrove)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && S.data && !S.modal) call('api_list').then(d => { S.data = d; render(); }).catch(() => {});
+});
+
+// ---------- avvio ----------
+boot();
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+</body>
+</html>
