@@ -141,6 +141,8 @@ main { padding-bottom: 110px; }
 .hbtn:active { background: var(--accent-soft); }
 .hbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .hbtn i { position: absolute; top: 0; right: -2px; min-width: 17px; height: 17px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font: 600 11px/17px system-ui; text-align: center; font-style: normal; padding: 0 4px; }
+.last { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 8px 0; cursor: pointer; }
+.last:first-of-type { border-top: 0; }
 .foot { text-align: center; font-size: 12px; color: var(--muted); margin: 26px 0 4px; }
 .foot.warn { color: var(--danger); }
 .sheet .note { margin: 12px 0 0; }
@@ -236,7 +238,7 @@ function toast(msg, err) {
 
 // ---------- motore locale: Vino.xlsx in memoria + registro delle modifiche ----------
 const isDate = v => Object.prototype.toString.call(v) === '[object Date]';
-const APP_VERSION = '1.1 · 21 ott 2026';
+const APP_VERSION = '1.2 · 21 ott 2026';
 const K_BASE = 'cantina-base', K_META = 'cantina-meta', K_OPS = 'cantina-ops', SYNC_KEY = 'cantina-sync';
 const XWINE = ['Nome', 'Cantina', 'Anno', 'Acquisto', 'Prezzo', 'Valore', 'Quantità', 'Cantinetta'];
 const XDOL = ['Nome', 'Prezzo', 'Valore', 'Quantità'];
@@ -734,11 +736,19 @@ function statsHTML() {
   rows('bevuti').forEach(r => { const y = r.Quando || '—'; (drunk[y] = drunk[y] || { n: 0, v: 0 }); drunk[y].n++; drunk[y].v += num(r.Valore); });
   const dr = Object.entries(drunk).sort((a, b) => b[0] - a[0]);
 
+  const recent = ['rossi', 'nonrossi'].flatMap(k => rows(k).map(r => ({ ...r, _k: k }))).filter(r => /^\d{4}-\d{2}$/.test(String(r.Acquisto || '')))
+    .sort((a, b) => cmpStr(b.Acquisto, a.Acquisto) || b.row - a.row).slice(0, 6);
+  const recentHTML = recent.length ? recent.map(r => {
+    const q = num(r['Quantità']), meta = [r.Cantina && String(r.Cantina).trim(), r.Anno && r.Anno !== '-' ? r.Anno : ''].filter(Boolean).join(' · ');
+    return `<button class="last" data-dact="open" data-dk="${r._k}" data-drow="${r.row}"><span><span class="name">${esc(String(r.Nome).trim())}</span><br><span class="meta">${esc(meta)}${meta ? ' · ' : ''}${q} ${q === 1 ? 'bottiglia' : 'bottiglie'}</span></span><span class="meta">${esc(fmtAcq(r.Acquisto))}</span></button>`;
+  }).join('') : '<div class="meta">Nessun acquisto con data</div>';
+
   return `<div class="kpis">
     <div class="kpi"><div class="n">${bott}</div><div class="l">bottiglie in cantina</div></div>
     <div class="kpi"><div class="n">${fridge}</div><div class="l">in cantinetta</div></div>
     <div class="kpi"><div class="n">${eurShort(val)}</div><div class="l">valore stimato</div></div>
     <div class="kpi"><div class="n">${eurShort(spent)}</div><div class="l">speso (prezzi d'acquisto)</div></div></div>
+  <div class="card"><h2>Ultime bottiglie aggiunte</h2>${recentHTML}<div class="meta" style="margin-top:6px">In base alla data di acquisto (Rossi e Non rossi).</div></div>
   <div class="card"><h2>Per tipo (bottiglie)</h2>${bars(kinds)}</div>
   <div class="card"><h2>Non rossi per colore (bottiglie)</h2>${bars(Object.entries(rows('nonrossi').reduce((m, r) => { const c = String(r.Colore || '').trim() || 'Senza colore'; m[c] = (m[c] || 0) + num(r['Quantità']); return m; }, {})).sort((a, b) => b[1] - a[1]))}</div>
   <div class="card"><h2>Cantine più presenti (bottiglie)</h2>${bars(topC)}</div>
